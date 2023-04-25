@@ -28,13 +28,29 @@ typedef struct nodeMedico{
 }NodeMed;
 
 //Funcoes
-void resgistrarDadosUtente(Medico *medico,Utente dados){
-    Node *newNode = (Node*)malloc(sizeof(Node));
-    newNode->utente = dados;
-    newNode->next = medico->lista->next;
-    medico->lista = newNode;
+//----------------------------------------------Utentes-----------------------------------------------
+void resgistrarDadosUtente(NodeMed **medico,Utente dados){
+    NodeMed *aux = *medico;
+    int found = 0;
+    while(aux != NULL && found == 0){
+        if(aux->medico.codigoMedico == dados.codigoMedico){
+            Node *newNode = (Node*)malloc(sizeof(Node) + 1);
+            newNode->utente = dados;
+            aux->medico.lista = newNode;
+            found = 1;
+        }
+        aux = aux->next;
+    }
+    if(found == 1){
+        printf("\n[ :D ]Sr.%s adiconado a lista de espera",dados.nomeUtente);
+        printf("\n\nClique 'ENTER' para continuar.. ");
+    }else{
+        printf("\n[ :( ] Algo deu errado, tente novamente ..");
+        printf("\n\nClique 'ENTER' para continuar.. ");
+    }
+    fflush(stdin);
+    getchar();
 }
-
 
 void listaEsperaEntrada(Utente *utente){
         system("cls");
@@ -53,8 +69,8 @@ void listaEsperaEntrada(Utente *utente){
     return;
 }
 
-void listaEsperaVer(Medico medico){
-        Node *aux = medico.lista;      
+void listaEsperaVer(NodeMed *medico){
+        NodeMed *aux = medico;      
         int i = 1;
 
         system("cls");
@@ -63,7 +79,8 @@ void listaEsperaVer(Medico medico){
         printf("--------------------------------------------------------\n");
         
         while(aux != NULL){
-            printf("[%d]%s",i,aux->utente.nomeUtente);
+            printf("[%d] %s -> %s",i,aux->medico.nomeMedico,aux->medico.lista->utente.nomeUtente);
+            aux = aux->next;
         }
     printf("\n\nClique 'ENTER' para continuar.. ");
     fflush(stdin);
@@ -72,9 +89,8 @@ void listaEsperaVer(Medico medico){
 
 void listaEsperaMenu(){
     //Structs necessarias
-    Node *lista = NULL;
-    Utente utente;
-    Medico medico;   
+    NodeMed *med = NULL;
+    Utente utente;   
     //Vars
     int opc = 1;
    
@@ -95,20 +111,19 @@ void listaEsperaMenu(){
 
             switch(opc)
             {
-            case 1: listaEsperaEntrada(&utente);resgistrarDadosUtente(&medico,utente);break;
+            case 1: listaEsperaEntrada(&utente);resgistrarDadosUtente(&med,utente);break;
             case 2: break;  
-            case 3: listaEsperaVer(medico);break;
+            case 3: listaEsperaVer(med);break;
             case 0: break;
             default: printf("[ERROR] Opcao Invalida!!");
             }
         }
-    free(lista);
     return;
 }
 
 //----------------------------------------------Medicos-----------------------------------------------
 void resgistrarDadosMedico(NodeMed **lista,Medico dados){
-    NodeMed *newNodeMed = (NodeMed*)malloc(sizeof(NodeMed));
+    NodeMed *newNodeMed = (NodeMed*)malloc(sizeof(NodeMed) + 1);
     newNodeMed->medico = dados;
     newNodeMed->next = *lista;
     *lista = newNodeMed;
@@ -129,7 +144,8 @@ void adicionarMedico(Medico *medico,NodeMed *lista){
         printf("[Numero Medico] ");
         scanf("%li",&medico->codigoMedico);
         fflush(stdin);
-        
+
+        //Vereficar se ja existe o codigoMedico na base de dados
         while(aux != NULL){
             if(medico->codigoMedico == aux->medico.codigoMedico){
                 printf("\n[ERROR] Numero de medico ja existente");
@@ -157,12 +173,13 @@ void listaMedicos(NodeMed *node){
         printf("--------------------------------------------------------\n");
         printf("|               Lista de Espera                        |\n");
         printf("--------------------------------------------------------\n");
-        
+        printf("|                                                      |\n");
         while(aux != NULL){
             printf("| [%d] %s\t->\t%li\t\t\t\t\b|\n",i,aux->medico.nomeMedico,aux->medico.codigoMedico);
             aux = aux->next;
             i++;
         }
+        printf("|                                                      |\n");
         printf("--------------------------------------------------------\n");
         printf("|                                                      |\n");
         printf("--------------------------------------------------------\n");
@@ -174,7 +191,7 @@ void listaMedicos(NodeMed *node){
 void listaMedicoMenu(){
     //Structs necessarias
     NodeMed *lista = NULL;
-    Medico medico;   
+    Medico medico;
     //Vars
     int opc = 1;
    
@@ -195,16 +212,14 @@ void listaMedicoMenu(){
 
             switch(opc)
             {
-            case 1: adicionarMedico(&medico,lista);resgistrarDadosMedico(&lista,medico);break;
-            case 2: break;  
-            case 3: break;
-            case 4: listaMedicos(lista);break;
-            case 0: break;
-            default: printf("[ERROR] Opcao Invalida!!");
+                case 1: adicionarMedico(&medico,lista);resgistrarDadosMedico(&lista,medico);break;
+                case 2: break;  
+                case 3: break;
+                case 4: listaMedicos(lista);break;
+                case 0: break;
+                default: printf("[ERROR] Opcao Invalida!!");
             }
-        }
-    free(lista);
-    return;
+    }
 }
 
 int main(){
@@ -233,7 +248,7 @@ int main(){
         {
         case 1: listaMedicoMenu();break;
         case 2: break;  
-        case 3: /*listaEsperaEntrada(&utente,&lista)*/listaEsperaMenu();break;
+        case 3: listaEsperaMenu();break;
         case 0: break;
         default: printf("[ERROR] Opcao Invalida!!");
         }
