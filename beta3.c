@@ -19,7 +19,7 @@ typedef struct node{
 typedef struct medico{
     long codigoMedico;
     char nomeMedico[maxnome];
-    Node *lista;
+    Node *lista;//queue
 }Medico;
 
 typedef struct nodeMedico{
@@ -346,9 +346,9 @@ void listaMedicos(NodeMed *node){
     getchar();
 }
 
-void listaMedicoMenu(NodeMed *lista){
+void listaMedicoMenu(NodeMed **lista){
     //Structs necessarias
-    NodeMed *aux = lista;
+    //NodeMed *aux = *lista;
 
     Medico medico;
     //Vars
@@ -371,10 +371,10 @@ void listaMedicoMenu(NodeMed *lista){
 
             switch(opc)
             {
-                case 1: adicionarMedico(&medico,aux);resgistrarDadosMedico(&aux,medico);break;
+                case 1: adicionarMedico(&medico,*lista);resgistrarDadosMedico(lista,medico);break;
                 case 2: break;  
                 case 3: break;
-                case 4: listaMedicos(aux);break;
+                case 4: listaMedicos(*lista);break;
                 case 0: break;
                 default: printf("[ERROR] Opcao Invalida!!");
             }
@@ -413,7 +413,7 @@ int main(){
 
         switch(opc)
         {
-        case 1: listaMedicoMenu(lista);break;
+        case 1: listaMedicoMenu(&lista);break;
         case 2: listaUtenteMenu();break;
         case 3: listaEsperaMenu();break;
         case 0: break;
