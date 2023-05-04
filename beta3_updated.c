@@ -156,7 +156,7 @@ void listaUtenteMenu(NodeMed **lista,NodeUtente **listaUtente){
             switch(opc)
             {
                 case 1: adicionarUtente(*lista,*listaUtente,&utente);resgistrarDadosUtente(&listaUtente,utente);break;
-                case 2: break;  
+                case 2: removerUtente(lista, &utente);break;  
                 case 3: break;
                 case 4: listaUtentesVer(*listaUtente);break;
                 case 0: break;
@@ -436,14 +436,53 @@ void removerMedico(Medico *medico,NodeMed **lista){
 	
 	free(aux);
 	aux = NULL;
-	printf("Removido!\n");
+	printf("Medico removido!\n");
 	getch();
 	return 1;
 }
-	/*Retorna zero indicando que o elemento(no’) nao foi encontrado*/
 	return 0;
 }
+/*
+void removerUtente(NodeUtente **listaUt,Utente *utente){
+	
+	NodeUtente *aux;
+	NodeUtente *ant;
+	
+	aux = *listaUt;
+	ant = *listaUt;
+	
+	char nome[maxnome];
+    int encontrou = 0;
+    printf("Digite o nome do utente a remover: ");
+    fflush(stdin);
+    gets(nome);
 
+    while (!encontrou && aux != NULL){
+		if (!strcmp(aux->utente.nomeUtente, nome)){ 
+			encontrou = 1;
+	}
+		else{
+			ant = aux;
+			aux=aux->next;
+		}
+	}
+    if (encontrou){
+		if (ant == aux && aux == *listaUt){
+			*listaUt = aux->next;
+	}
+	else{
+		ant->next=aux->next;
+	}
+	
+	free(aux);
+	aux = NULL;
+	printf("\nUtente removido!\n");
+	getch();
+	return 1;
+}
+	return 0;
+}
+*/
 int main(){
     //Structs e pointers para Fila binaria
     NodeMed *lista = NULL;
