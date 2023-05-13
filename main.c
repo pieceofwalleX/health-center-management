@@ -11,15 +11,22 @@ typedef struct utente{
     char nomeUtente[maxnome];
 }Utente;
 
-typedef struct node{
+typedef struct nodeutente{
     Utente utente;
     struct node *next;
-}Node;
+}NodeUtente;
+
+typedef struct nodeEspera{
+    struct nodeEspera *end;   //Serve para saber a localizacao do ultimo nodo
+    struct nodeEspera *prev;
+    struct nodeEspera *next;
+    struct Utente *UT;
+}NodeEspera;
 
 typedef struct medico{
     long codigoMedico;
     char nomeMedico[maxnome];
-    Node *lista;
+    NodeUtente *lista;
 }Medico;
 
 typedef struct nodeMedico{
@@ -29,16 +36,17 @@ typedef struct nodeMedico{
 
 //Funcoes
 //----------------------------------------------Utentes-----------------------------------------------
-void resgistrarDadosUtente(NodeMed **lista,Utente dados){
-    NodeMed *newNodeMed = (NodeMed*)malloc(sizeof(NodeMed) + 1);
-    newNodeMed->medico.lista->utente = dados;
-    newNodeMed->next = *lista;
-    *lista = newNodeMed;
+void resgistrarDadosUtente(NodeUtente **lista,Utente dados){
+    NodeUtente *newNode = (NodeUtente*)malloc(sizeof(NodeUtente));
+    newNode->utente = dados;
+    newNode->next = *lista;
+    *lista = newNode;
 }
 
-void adicionarUtente(NodeMed *lista,Utente *utente){
+int adicionarUtente(NodeMed *listaMed,NodeUtente *listaUt,Utente *utente){
         
-        NodeMed *aux = lista;
+        NodeMed *aux = listaMed;
+        NodeUtente *aux2 = listaUt;
         int foundU = 0;
         int foundMed = 0;
         char c;
@@ -52,14 +60,14 @@ void adicionarUtente(NodeMed *lista,Utente *utente){
         fflush(stdin);
         gets(utente->nomeUtente);
         printf("[Numero Utente] ");
+        fflush(stdin);
         scanf("%li",&utente->codigoUtente);
         fflush(stdin);
         printf("[Numero Medico] ");
         scanf("%li",&utente->codigoMedico);
-        fflush(stdin);
 
-        while(aux != NULL && foundU != 1){
-            if(aux->medico.lista->utente.codigoUtente == utente->codigoUtente){
+        while(aux2 != NULL &&foundU == 0){
+            if(aux2->utente.codigoUtente == utente->codigoUtente){
                 printf("\n[ERROR] Numero de utente ja existente");
                 printf("\n\nClique 'ENTER' para reinserir os dados / Clique 'ESC' para voltar atras");
                 foundU = 1;
@@ -70,67 +78,76 @@ void adicionarUtente(NodeMed *lista,Utente *utente){
                 }else if(c == 27){
                     fflush(stdin);
                     memset(utente,0,sizeof(Utente));
-                    listaUtenteMenu();
+                    return 1;
                 }
                 else{
                     printf("[ERROR]Operacao Invalida");
                 }
                 getchar();
-                
-            }else if(aux->medico.codigoMedico == utente->codigoMedico){
+            }
+            aux2 = aux2->next;
+        }
+        while(aux != NULL && foundMed == 0){
+            if(aux->medico.codigoMedico == utente->codigoMedico){
                 foundMed = 1;
             }
+            aux = aux->next;
         }
-        
-        if(foundMed != 1){
-            printf("\n[ERROR] Numero de Medico nao encontrado");
-            printf("\n\nClique 'ENTER' para reinserir os dados / Clique 'ESC' para voltar atras");
-            
-            c = getch();
+            if(foundMed != 1){
+                printf("\n[ERROR] Numero de Medico nao encontrado");
+                printf("\n\nClique 'ENTER' para reinserir os dados / Clique 'ESC' para voltar atras");
+                
+                c = getch();
 
-                if(c == 13){
-                    fflush(stdin);memset(utente,0,sizeof(Utente));goto skip;
-                }else if(c == 27){
+                    if(c == 13){
+                        fflush(stdin);memset(utente,0,sizeof(Utente));goto skip;
+                    }else if(c == 27){
+                        fflush(stdin);
+                        memset(utente,0,sizeof(Utente));
+                        return 1;          
+                    }
+                    else{
+                        printf("[ERROR]Operacao Invalida");
+                    }
                     fflush(stdin);
-                    memset(utente,0,sizeof(Utente));
-                    listaUtenteMenu();
-                }
-                else{
-                    printf("[ERROR]Operacao Invalida");
-                }
-                fflush(stdin);
-        }else{
-            printf("\n[ ] Sr.%s (u%li) adiconado ao Sistema",utente->nomeUtente,utente->codigoUtente);
-        }
+            }else{
+                printf("\n[ ] Sr.%s (u%li) adiconado ao Sistema",utente->nomeUtente,utente->codigoUtente);
+                
+            }
+        getchar();
+        getchar();
 
-    return;
+    return 0;
 }
 
-void listaUtentesVer(NodeMed *dados){
-        NodeMed *aux = dados;      
+void listaUtentesVer(NodeUtente *dados){
+        NodeUtente *aux = dados;      
         int i = 1;
 
         system("cls");
-        printf("--------------------------------------------------------\n");
-        printf("|               Lista de Utentes                       |\n");
-        printf("--------------------------------------------------------\n");
+        printf("---------------------------------------------------------\n");
+        printf(" |               Lista de Utentes                      |\n");
+        printf("---------------------------------------------------------\n");
         
+        if(aux == NULL){
+            printf(" | \t\t\b\b\bA Lista encontra-se .. VAZIA .. \t\t\b|\n");
+        }
         while(aux != NULL){
-            printf("[%d] %s -> %s",i,aux->medico.lista->utente.nomeUtente,aux->medico.nomeMedico);
+            printf(" | [%d] %s\t->\t%li\t\t\t\t\b|\n",i,aux->utente.nomeUtente,aux->utente.codigoMedico);
             i++;
             aux = aux->next;
         }
+        printf("---------------------------------------------------------\n");
     printf("\n\nClique 'ENTER' para continuar.. ");
     fflush(stdin);
     getchar();
 }
 
-void listaUtenteMenu(){
+void listaUtenteMenu(NodeMed **lista,NodeUtente **listaUtente){
     //Structs necessarias
-    NodeMed *lista = NULL;
     Utente utente;
     //Vars
-    int opc = 1;
+    int opc = 1,check = 0;
    
     while(opc != 0){
             system("cls");
@@ -149,10 +166,10 @@ void listaUtenteMenu(){
 
             switch(opc)
             {
-                case 1: adicionarUtente(lista,&utente);resgistrarDadosUtente(&lista,utente);break;
+                case 1: check = adicionarUtente(*lista,*listaUtente,&utente);if(check== 0)resgistrarDadosUtente(listaUtente,utente);break;
                 case 2: break;  
                 case 3: break;
-                case 4: /*listaUtentesVer(lista)*/;break;
+                case 4: listaUtentesVer(*listaUtente);break;
                 case 0: break;
                 default: printf("[ERROR] Opcao Invalida!!");
             }
@@ -160,23 +177,50 @@ void listaUtenteMenu(){
 }
 //----------------------------------------------Lista de Espera-----------------------------------------------
 
-void resgistrarEntrada(NodeMed **lista,Utente dados){
-    NodeMed *newNode = (NodeMed*)malloc(sizeof(NodeMed) + 1);
-    newNode->medico.lista->utente = dados;
-    newNode->next = *lista;
-    *lista = newNode;
+void registrarEntrada(NodeEspera **listaEspera, Utente *dados) {
+    NodeEspera *newNode = (NodeEspera*) malloc(sizeof(NodeEspera));
+    newNode->UT = dados;
+    newNode->prev = NULL;
+    newNode->next = *listaEspera;
+    if (*listaEspera != NULL) {
 
-    printf("\n[ :D ]Sr.%s adiconado a lista de espera",dados.nomeUtente);
-    printf("\n\nClique 'ENTER' para continuar.. ");
+        (*listaEspera)->prev = newNode;
+    }
+    *listaEspera = newNode;
 
-    fflush(stdin);
+    if (newNode->next == NULL) {
+        newNode->end = newNode;
+    } else {
+
+        newNode->end = (*listaEspera)->next->end;
+    }
+
+    printf("\n[ :D ] Sr.%s adicionado a lista de espera :D\n\n", dados->nomeUtente);
+
+    printf("\nClique 'ENTER' para continuar.. ");
     getchar();
 }
 
 
+void procuraMedico(NodeMed **listaMed,NodeUtente *dados,long codigo,NodeEspera **listaEspera){
+    NodeMed *aux = *listaMed;
+
+    int found = 0;
+    while(aux != NULL && found == 0){
+        if(aux->medico.codigoMedico == codigo){
+            registrarEntrada(listaEspera,&dados->utente);
+            found = 1;
+        }
+        aux = aux->next;
+    }
+    if (found == 0) {
+        printf("\nERROR: Médico não encontrado.\n");
+    }
+}
+
 int verificaResposta(char ans[maxnome]){
     //Verificar se a resposta comeca por um Numero Ou Letra , assim podemos verificar se e um nome ou um numero
-    //AVISO : com muitos lapsos ,pois ele pode colocar 1 numero e depois uma letra
+    //AVISO : com muitos lapsos ,pois ele pode colocar um numero e depois uma letra da erro
     int found = 0,i = 0;
     char num[1];
     while(i != 10 && found == 0){
@@ -190,8 +234,29 @@ int verificaResposta(char ans[maxnome]){
     return 1;
 }
 
-void listaEsperaEntrada(NodeMed **dados){
-        NodeMed *aux = *dados;
+int numUtentesEspera(NodeEspera *lista,long int codigo){
+    NodeEspera *lastNode = NULL;
+    NodeEspera *aux = lista;  
+    int i = 0;
+
+    lastNode = aux->end;
+
+    while (lastNode != NULL) {
+        Utente *utente = lastNode->UT;  
+        if(utente->codigoMedico == codigo){
+                i++;
+        }
+        lastNode = lastNode->prev;      
+    }
+    return i;
+}
+
+
+void listaEsperaEntrada(NodeMed **lista,NodeUtente *dados,NodeEspera **listaEspera){
+        NodeMed *auxMed = *lista;
+        NodeUtente *auxUt = dados;
+        NodeEspera *auxEspera = *listaEspera;
+
         char ans[maxnome];
         int style,found = 0;
         system("cls");
@@ -207,15 +272,32 @@ void listaEsperaEntrada(NodeMed **dados){
         printf("--------------------------------------------------------\n");
 
         style = verificaResposta(ans);
-        
-        while(aux != NULL && found != 1){
-            if(style == 1 && strcmp(aux->medico.lista->utente.nomeUtente,ans)){
+
+        while(auxEspera != NULL){
+            Utente *utente = auxEspera->UT;
+            if(style == 1 && !strcmp(utente->nomeUtente,ans)){
                 found = 1;
-                resgistrarEntrada(&aux,aux->medico.lista->utente);
-            }else if(style == 0 && aux->medico.lista->utente.codigoUtente == atoi(ans)){
+            }else if(style == 0 && utente->codigoUtente == atoi(ans)){
                 found = 1;
-                resgistrarEntrada(&aux,aux->medico.lista->utente);
-            } 
+            }
+           auxEspera = auxEspera->next;
+        }
+        if(found == 1){
+            printf("[] Utente ja esta na lista de Espera\n\n");
+            printf("\nClique 'ENTER' para continuar.. ");
+            getchar();
+            getchar();
+            return;
+        }
+        while(auxUt != NULL && found != 1){
+            if(style == 1 && !strcmp(auxUt->utente.nomeUtente,ans)){
+                found = 1;
+                procuraMedico(&auxMed,auxUt,auxUt->utente.codigoMedico,listaEspera);
+            }else if(style == 0 && auxUt->utente.codigoUtente == atoi(ans)){
+                found = 1;
+                procuraMedico(&auxMed,auxUt,auxUt->utente.codigoMedico,listaEspera);
+            }
+            auxUt = auxUt->next;
         }
         if(found != 1){
             printf("\n[ERRO] Dados introduzidos incorretamente / Utente nao existe na base de dados");
@@ -225,41 +307,61 @@ void listaEsperaEntrada(NodeMed **dados){
     return;
 }
 
-void listaEsperaVer(NodeMed *medico){
-        NodeMed *aux = medico;      
-        int i = 1;
+void listaEsperaVer(NodeEspera *listaEspera,NodeMed *listaMed){
+    NodeEspera *lastNode = NULL;
+    NodeEspera *aux = listaEspera;   
+    NodeMed *med = listaMed;
+    int i = 1;
+    long int codigo;
 
-        system("cls");
-        printf("--------------------------------------------------------\n");
-        printf("|               Lista de Espera                        |\n");
-        printf("--------------------------------------------------------\n");
-        
-        while(aux != NULL){
-            printf("[%d] %s -> %s",i,aux->medico.nomeMedico,aux->medico.lista->utente.nomeUtente);
-            aux = aux->next;
+    system("cls");
+    printf("--------------------------------------------------------\n");
+    printf("|               Digite o numero do Medico              |\n");
+    printf("--------------------------------------------------------\n");
+    printf("[Numero Medico] ");
+    scanf("%li",&codigo);
+
+    system("cls");
+    printf("--------------------------------------------------------\n");
+    printf("|                   Lista de Espera                    |\n");
+    printf("--------------------------------------------------------\n");
+
+    
+
+    lastNode = aux->end;
+
+    while (lastNode != NULL) {
+        Utente *utente = lastNode->UT;  
+        if(utente->codigoMedico == codigo){
+                printf("[%d] %s -> %li \n", i, utente->nomeUtente,utente->codigoMedico);
+                i++;
         }
-    printf("\n\nClique 'ENTER' para continuar.. ");
+        lastNode = lastNode->prev;      
+    }
+    if (i == 1) {
+        printf("\n\n[ :D ] Lista de espera vazia\n");
+    } else {
+        printf("\n\nClique 'ENTER' para continuar.. ");
+    }
     fflush(stdin);
     getchar();
 }
 
-void listaEsperaMenu(){
-    //Structs necessarias
-    NodeMed *med = NULL;
-    Utente utente;   
+void listaEsperaMenu(NodeMed **listaMed,NodeUtente **listaUt,NodeEspera **listaEspera){
+    //Structs necessarias   
     //Vars
     int opc = 1;
    
     while(opc != 0){
             system("cls");
             printf("--------------------------------------------------------\n");
-            printf("|[1..]Check-in Utente                                    |\n");
-            printf("|[2..]Remover Utente da Lista                            |\n");
-            printf("|[3..]Ver Lista de Espera                                |\n");
-            printf("|                                                        |\n");
-            printf("|                                                        |\n");
-            printf("|                                                        |\n");
-            printf("|[0..]Sair                                               |\n");
+            printf("|[1..]Check-in Utente                                  |\n");
+            printf("|[2..]Remover Utente da Lista                          |\n");
+            printf("|[3..]Ver Lista de Espera                              |\n");
+            printf("|                                                      |\n");
+            printf("|                                                      |\n");
+            printf("|                                                      |\n");
+            printf("|[0..]Sair                                             |\n");
             printf("--------------------------------------------------------\n");
             printf("[?] Digite a opcao desejada: \n");
             printf("[>] ");
@@ -267,9 +369,9 @@ void listaEsperaMenu(){
 
             switch(opc)
             {
-            case 1: listaEsperaEntrada(&med);break;
+            case 1: listaEsperaEntrada(listaMed,*listaUt,listaEspera);break;
             case 2: break;  
-            case 3: listaEsperaVer(med);break;
+            case 3: listaEsperaVer(*listaEspera,*listaMed);break;
             case 0: break;
             default: printf("[ERROR] Opcao Invalida!!");
             }
@@ -279,15 +381,42 @@ void listaEsperaMenu(){
 
 //----------------------------------------------Medicos-----------------------------------------------
 void resgistrarDadosMedico(NodeMed **lista,Medico dados){
-    NodeMed *newNodeMed = (NodeMed*)malloc(sizeof(NodeMed) + 1);
+    NodeMed *newNodeMed = (NodeMed*)malloc(sizeof(NodeMed));
     newNodeMed->medico = dados;
     newNodeMed->next = *lista;
     *lista = newNodeMed;
 }
 
+int verificaNumMedico(long int codigo,NodeMed *lista){
+    NodeMed *aux = lista;
+    char c;
+
+    while(aux != NULL){
+            if(codigo == aux->medico.codigoMedico){
+                printf("\n[ERROR] Numero de medico ja existente");
+                printf("\n\nClique 'ENTER' para reinserir os dados / Clique 'ESC' para voltar atras ");
+                c = getch();
+                if(c == 13){
+                    fflush(stdin);
+                    return 1;
+                }else if(c == 27){
+                    fflush(stdin);
+                    return -1;
+                }
+                else printf("[ERROR]Operacao Invalida");
+                getchar();
+            }
+        aux = aux->next;
+    }
+    return 0;
+}
+
 void adicionarMedico(Medico *medico,NodeMed *lista){
         NodeMed *aux = lista;
-        char c;
+
+        int vald;
+
+
         skip:
         system("cls");
         printf("--------------------------------------------------------\n");
@@ -302,7 +431,13 @@ void adicionarMedico(Medico *medico,NodeMed *lista){
         fflush(stdin);
 
         //Vereficar se ja existe o codigoMedico na base de dados
-        while(aux != NULL){
+        vald = verificaNumMedico(medico->codigoMedico,lista);
+        if(vald == 1){
+            goto skip;
+        }else if (vald == -1){
+            return;
+        }
+        /*while(aux != NULL){
             if(medico->codigoMedico == aux->medico.codigoMedico){
                 printf("\n[ERROR] Numero de medico ja existente");
                 printf("\n\nClique 'ENTER' para reinserir os dados / Clique 'ESC' para voltar atras ");
@@ -311,103 +446,308 @@ void adicionarMedico(Medico *medico,NodeMed *lista){
                     fflush(stdin); goto skip;
                 }else if(c == 27){
                     fflush(stdin);
-                    listaMedicoMenu();
+                    return 0;
                 }
                 else printf("[ERROR]Operacao Invalida");
                 getchar();
             }
             aux = aux->next;
-        }
-    return;
+        }*/
+
 }
 
-void listaMedicos(NodeMed *node){
-        NodeMed *aux = node;          
-        int i = 1;
+void removerMedicoListaEspera(NodeEspera **lista, long int codigo) {
+    NodeEspera *aux = *lista;
+    NodeEspera *ant = NULL;
 
-        system("cls");
-        printf("--------------------------------------------------------\n");
-        printf("|               Lista de Espera                        |\n");
-        printf("--------------------------------------------------------\n");
-        printf("|                                                      |\n");
-        while(aux != NULL){
-            printf("| [%d] %s\t->\t%li\t\t\t\t\b|\n",i,aux->medico.nomeMedico,aux->medico.codigoMedico);
+    while (aux != NULL) {
+        Utente *utente = aux->UT;
+        if (utente->codigoMedico == codigo) {
+            if (ant == NULL) {
+                *lista = aux->next;
+            } else {
+                ant->next = aux->next;
+            }
+
+            if (*lista != NULL) {
+                (*lista)->end = aux->end;
+            }
+
+            free(aux);
+            aux = NULL;
+
+            return;
+        } else {
+            ant = aux;
             aux = aux->next;
-            i++;
         }
-        printf("|                                                      |\n");
+    }
+}
+
+void removerMedico(NodeMed **lista,NodeEspera **listaEspera){
+    
+    NodeMed *aux = *lista;
+    NodeMed *ant = NULL;
+    
+    
+    long int codigo;
+    int encontrou = 0;
+    system("cls");
+    printf("--------------------------------------------------------\n");
+    printf("|               Digite o numero do Medico              |\n");
+    printf("--------------------------------------------------------\n");
+    fflush(stdin);
+    printf("|-> ");
+    scanf("%li",&codigo);
+
+    while (!encontrou && aux != NULL){
+        if (aux->medico.codigoMedico == codigo){ 
+            encontrou = 1;
+        }
+        else{
+            ant = aux;
+            aux=aux->next;
+        }
+    }
+    if (encontrou){
+        if (ant == NULL && aux == *lista)
+        {
+            *lista = NULL;
+        }
+        else
+        {
+            if (aux->next == NULL)
+            {
+                ant->next = NULL;
+            }
+            else{
+                ant->next = aux->next;
+            }
+        }
+
+        free(aux);
+        aux = NULL;
+
+        if (*listaEspera != NULL) {
+            removerMedicoListaEspera(listaEspera, codigo);
+        }
+
         printf("--------------------------------------------------------\n");
-        printf("|                                                      |\n");
+        printf("|                   Medico removido!                   |\n");
         printf("--------------------------------------------------------\n");
+        getchar();
+        getchar();
+    }
+}
+
+void editarDadosMedico(NodeMed **lista){
+    int op;
+    NodeMed *aux = *lista;
+
+    int encontrou = 0,vald;
+    long int codigoMed, newCode;
+
+    system("cls");
+    printf("----------------------------------------------------------\n");
+    printf("|                Digite o numero do Medico               |\n");
+    printf("----------------------------------------------------------\n|> ");
+    fflush(stdin);
+    scanf("%li",&codigoMed);
+
+
+    while(aux != NULL && encontrou == 0){
+        if(aux->medico.codigoMedico == codigoMed){
+            system("cls"); 
+            printf("--------------------------------------------------------\n");
+            printf("|[1..] Nome                                            |");
+            printf("\n|[2..] Numero Medico                                   |");
+            printf("\n|                                                      |");
+            printf("\n|[0..] Sair                                            |");
+            printf("\n--------------------------------------------------------\n|> ");
+            fflush(stdin);
+            scanf("%d",&op);
+
+            switch(op){
+                case 1:
+                    system("cls"); 
+                    printf("--------------------------------------------------------\n");
+                    printf("|                   Insira o novo nome                 |");
+                    printf("\n--------------------------------------------------------\n|> ");
+                    fflush(stdin);
+                    gets(aux->medico.nomeMedico);
+                    break;
+
+                case 2:
+                    skip:
+                    system("cls");    
+                    printf("--------------------------------------------------------\n");
+                    printf("|           Insira o novo numero de medico             |  ");
+                    printf("\n--------------------------------------------------------\n|> ");
+                    fflush(stdin);
+                    scanf("%li", &newCode);
+                    vald = verificaNumMedico(newCode,*lista);
+                    if (vald == 0){
+                        aux->medico.codigoMedico = newCode;
+                    }else if(vald == 1){
+                        goto skip;
+                    }
+                    break;
+                case 0: break;
+                default: printf("Opção Inválida");
+            }
+            encontrou = 1;
+        }
+        aux = aux->next;
+    }
+    
+    if(!encontrou) printf("\n[ERROR] Falha ao encontrar o Medico");
+
     printf("\n\nClique 'ENTER' para continuar.. ");
     fflush(stdin);
     getchar();
 }
 
-void listaMedicoMenu(){
+void listaMedicos(NodeMed *node){
+        NodeMed *aux = node;     
+        
+        int i = 1;
+
+        system("cls");
+                   
+
+        printf("\n----------------------------------------------------------\n");
+        printf(" |               Lista de Medicos                       | \n");
+        printf("----------------------------------------------------------\n");
+        printf(" |                                                      | \n");
+        while(aux != NULL){
+            printf(" | [%d] %s\t->\t%li\t\t\t\t|\n",i,aux->medico.nomeMedico,aux->medico.codigoMedico);
+            aux = aux->next;
+            i++;
+        }
+        printf(" |                                                      | \n");
+        printf("----------------------------------------------------------\n");
+        printf(" |                                                      | \n");
+        printf("----------------------------------------------------------\n");
+    printf("\n\nClique 'ENTER' para continuar.. ");
+    fflush(stdin);
+    getchar();
+}
+
+void consultarDadosMedico(NodeMed *lista,NodeEspera *listaEspera){
+
+    NodeMed *aux = lista;
+    int encontrou = 0, quant;
+    long int codigo;
+
+    system("cls");
+    printf("----------------------------------------------------------\n");
+    printf("|                Digite o numero do Medico               |\n");
+    printf("----------------------------------------------------------\n|> ");
+    fflush(stdin);
+    scanf("%li",&codigo);
+
+
+    quant = numUtentesEspera(&listaEspera,codigo);
+
+    while(aux != NULL && encontrou == 0){
+        if(aux->medico.codigoMedico == codigo){
+            printf("----------------------------------------------------------\n");
+            printf("|Nome: %s \t\t\t\t\t\t|",aux->medico.nomeMedico);
+            printf("\n|Codigo: %li \t\t\t\t\t\t|",aux->medico.codigoMedico);
+            printf("\n|Utentes em Espera: %i \t\t\t\t\t|",quant);
+            printf("\n----------------------------------------------------------\n");
+            encontrou = 1;
+        }
+        aux = aux->next;
+    }
+    if(!encontrou)
+    printf("\n[ERROR] Falha ao encontrar o Medico");
+
+    printf("\n\nClique 'ENTER' para continuar.. ");
+    fflush(stdin);
+    getchar();
+}
+
+void listaMedicoMenu(NodeMed **lista,NodeEspera **listaEspera){
     //Structs necessarias
-    NodeMed *lista = NULL;
+    //NodeMed *aux = *lista;
+
     Medico medico;
     //Vars
     int opc = 1;
    
     while(opc != 0){
             system("cls");
-            printf("--------------------------------------------------------\n");
-            printf("|[1..]Adicionar Medico                                   |\n");
-            printf("|[2..]Remover Medico                                     |\n");
-            printf("|[3..]Editar Perfil do Medico                            |\n");
-            printf("|[4..]Consultar Lista de Medicos                         |\n");
-            printf("|                                                        |\n");
-            printf("|                                                        |\n");
-            printf("|[0..]Sair                                               |\n");
-            printf("--------------------------------------------------------\n");
+            printf("------------------------------------------------------------\n");
+            printf(" |[1..]Adicionar Medico                                   |\n");
+            printf(" |[2..]Remover Medico                                     |\n");
+            printf(" |[3..]Editar Perfil do Medico                            |\n");
+            printf(" |[4..]Consultar Lista de Medicos                         |\n");
+            printf(" |[5..]Consultar Medico                                   |\n");
+            printf(" |                                                        |\n");
+            printf(" |[0..]Sair                                               |\n");
+            printf("------------------------------------------------------------\n");
             printf("[?] Digite a opcao desejada: \n");
             printf("[>] ");
             scanf("%d",&opc);
 
             switch(opc)
             {
-                case 1: adicionarMedico(&medico,lista);resgistrarDadosMedico(&lista,medico);break;
-                case 2: break;  
-                case 3: break;
-                case 4: listaMedicos(lista);break;
+                case 1: adicionarMedico(&medico,*lista);resgistrarDadosMedico(lista,medico);break;
+                case 2: removerMedico(lista,listaEspera);break;  
+                case 3: editarDadosMedico(lista);break;
+                case 4: listaMedicos(*lista);break;
+                case 5: consultarDadosMedico(*lista,*listaEspera);break;
                 case 0: break;
                 default: printf("[ERROR] Opcao Invalida!!");
             }
     }
 }
 
+
+
 int main(){
     //Structs e pointers para Fila binaria
-
+    NodeMed *lista = NULL;
+    NodeUtente *listaUtente = NULL;
+    NodeEspera *listaEspera = NULL;
     //Criacao de variaveis
     int opc = 1;
     //Criacao do Menu Inicial
 
     while(opc != 0){
         system("cls");
-        printf("--------------------------------------------------------\n");
-        printf("|[1..]Gestao Medico                                    |\n");
-        printf("|[2..]Gestao Utente                                    |\n");
-        printf("|[3..]Lista De Espera                                  |\n");
-        printf("|                                                      |\n");
-        printf("|                                                      |\n");
-        printf("|                                                      |\n");
-        printf("|[0..]Sair                                             |\n");
-        printf("--------------------------------------------------------\n");
+
+        printf("\n \t     ____    _     __  ____  _____    \t  ");
+        printf("\n \t    / ___|  / \\  _/_/_|  _ \\| ____|   \t   " );
+        printf("\n \t    \\___ \\ / _ \\| | | | | | |  _|       \t   " );
+        printf("\n \t     ___) / ___ \\ |_| | |_| | |___    \t   " );
+        printf("\n \t    |____/_/   \\_\\___/|____/|_____|   \t   " );
+
+        printf("\n///////////////////////////////////////////////////////////");
+        printf("\n-----------------------------------------------------------\n");
+        printf("  |[1..]Gestao Medico                                    |\n");
+        printf("  |[2..]Gestao Utente                                    |\n");
+        printf("  |[3..]Lista De Espera                                  |\n");
+        printf("  |                                                      |\n");
+        printf("  |                                                      |\n");
+        printf("  |                                                      |\n");
+        printf("  |[0..]Sair                                             |\n");
+        printf("------------------------------------------------------------\n");
         printf("[?] Digite a opcao desejada: \n");
         printf("[>] ");
         scanf("%d",&opc);
 
         switch(opc)
         {
-        case 1: listaMedicoMenu();break;
-        case 2: listaUtenteMenu();break;
-        case 3: listaEsperaMenu();break;
+        case 1: listaMedicoMenu(&lista,&listaEspera);break;
+        case 2: listaUtenteMenu(&lista,&listaUtente);break;
+        case 3: listaEsperaMenu(&lista,&listaUtente,&listaEspera);break;
         case 0: break;
         default: printf("[ERROR] Opcao Invalida!!");
         }
     }
+    free(lista);free(listaUtente);free(listaEspera);
+
     return 0;
 }
